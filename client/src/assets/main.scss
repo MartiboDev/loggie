@@ -1,0 +1,16 @@
+:root {
+	--layout-background-color: #1e1e1e;
+	--border-color: var(--surface-100);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: "Roboto", sans-serif;
+	margin: 0;
+	padding: 0;
+}

@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import Layout from "./components/Layout.vue";
+import { RouterView } from "vue-router"
 </script>
 
 <template>
-  <Layout>
-    <MainContent />
-  </Layout>
+	<MainLayout>
+		<RouterView />
+	</MainLayout>
 </template>
 
-<style>
-html {
-  overflow-y: auto;
-}
-</style>
+<style></style>

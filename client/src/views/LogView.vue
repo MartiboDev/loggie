@@ -1,81 +1,66 @@
 <template>
 	<main class="log-view">
-		<DataTable :value="logs">
-			<Column field="level" header="Level" style="width: 5%">
-				<template #body="{ data }">
-					<div class="cell-center">
-						<i
-							class="pi"
-							:class="logLevels[data.level].icon"
-							:style="{ color: `var(--${logLevels[data.level].color})` }"
-						></i>
-						<span>{{
-							data.level.charAt(0).toUpperCase() + data.level.slice(1)
-						}}</span>
-					</div>
-				</template>
-			</Column>
-			<Column field="category" header="Category" style="width: 10%"></Column>
-			<Column field="timestamp" header="Timestamp" style="width: 15%"></Column>
-			<Column field="message" header="Message" style="width: 70%"></Column>
-		</DataTable>
+		<Button @click="sendWS()">Send</Button>
+		<LogTable :logs="logs" />
 	</main>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue"
 
+const logs = ref([])
+
 onMounted(() => {
 	logs.value = [
 		{
-			level: "debug",
-			category: "User",
-			timestamp: new Date().toISOString(),
+			severity: "debug",
+			category: "Client",
+			resource: "main_race_2",
+			timestamp: new Date(),
 			message: "{ 'user': 'John', 'action': 'login' }",
 		},
 		{
-			level: "info",
-			category: "User",
-			timestamp: new Date().toISOString(),
+			severity: "info",
+			category: "Server",
+			resource: "core_admin",
+			timestamp: new Date(),
 			message: "User logged in",
 		},
 		{
-			level: "warning",
-			category: "User",
-			timestamp: new Date().toISOString(),
+			severity: "warning",
+			category: "Server",
+			resource: "core_admin",
+			timestamp: new Date(),
 			message: "User tried deleting profile",
 		},
 		{
-			level: "error",
-			category: "System",
-			timestamp: new Date().toISOString(),
+			severity: "error",
+			category: "UI",
+			resource: "main_race_2",
+			timestamp: new Date(),
 			message: "Error occurred in system",
 		},
 	]
 })
 
-const logs = ref([])
+let socket = new WebSocket("ws://localhost:3000/ws")
+let socketOrder = new WebSocket("ws://localhost:3000/orderbookfeed")
 
-const logLevels = {
-	debug: { icon: "pi-question-circle", color: "gray-500" },
-	info: { icon: "pi-info-circle", color: "cyan-500" },
-	warning: { icon: "pi-exclamation-triangle", color: "orange-500" },
-	error: { icon: "pi-exclamation-circle", color: "red-500" },
+socketOrder.onmessage = (event) => {
+	console.log("Recieved from the server:", event.data)
+}
+
+socket.onmessage = (event) => {
+	console.log("Recieved from the server:", event.data)
+}
+
+function sendWS() {
+	socket.send("Hello from the client!")
 }
 </script>
 
 <style scoped lang="scss">
 .log-view {
 	padding: 1.5rem;
-}
-
-.pi {
-	font-size: 1.1rem;
-}
-
-.cell-center {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
 }
 </style>

@@ -25,6 +25,8 @@ declare module 'vue' {
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
     Layout: typeof import('./src/components/layout/Layout.vue')['default']
+    Log: typeof import('./src/components/Log.vue')['default']
+    LogTable: typeof import('./src/components/LogTable.vue')['default']
     MainLayout: typeof import('./src/components/layouts/MainLayout.vue')['default']
     Navbar: typeof import('./src/components/layouts/Navbar.vue')['default']
     PageTitle: typeof import('./src/components/layouts/PageTitle.vue')['default']

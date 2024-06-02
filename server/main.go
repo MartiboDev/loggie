@@ -67,9 +67,24 @@ func (s *Server) broadcast(b []byte) {
 	}
 }
 
+func getCurrentTime() string {
+	hour := fmt.Sprintf("%d", time.Now().Hour())
+
+	if len(hour) < 2 {
+		hour = fmt.Sprintf("0%s", hour)
+	}
+
+	return fmt.Sprintf("%s:%d:%d", hour, time.Now().Minute(), time.Now().Second())
+}
+
+const Port int64 = 3000
+
 func main() {
+	fmt.Printf("[%s] Starting loggie on port %d\n", getCurrentTime(), Port)
+
 	server := NewServer()
+
 	http.Handle("/ws", websocket.Handler(server.handleWS))
 	http.Handle("/orderbookfeed", websocket.Handler(server.handleWSOrderbook))
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", Port), nil)
 }

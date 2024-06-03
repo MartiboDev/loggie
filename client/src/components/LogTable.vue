@@ -16,23 +16,23 @@ interface Log {
 	severity: string
 	category: string
 	resource: string
-	timestamp: string
+	timestamp: Date
 	message: string
 }
 
-const props = defineProps({
+defineProps({
 	logs: {
 		type: Object as PropType<Log[]>,
 		required: true,
 	},
 })
 
-const logSeverity = {
-	debug: { icon: "pi-question-circle", color: "gray-500" },
-	info: { icon: "pi-info-circle", color: "cyan-500" },
-	warning: { icon: "pi-exclamation-triangle", color: "orange-500" },
-	error: { icon: "pi-exclamation-circle", color: "red-500" },
-}
+// const logSeverity = {
+// 	debug: { icon: "pi-question-circle", color: "gray-500" },
+// 	info: { icon: "pi-info-circle", color: "cyan-500" },
+// 	warning: { icon: "pi-exclamation-triangle", color: "orange-500" },
+// 	error: { icon: "pi-exclamation-circle", color: "red-500" },
+// }
 </script>
 
 <style scoped>

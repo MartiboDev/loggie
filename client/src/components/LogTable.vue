@@ -1,10 +1,15 @@
 <template>
 	<DataTable :value="logs" tableStyle="min-width: 50rem" showGridlines>
+		<Column field="source" header="Source" style="width: 5%">
+			<template #body="{ data }">
+				{{ data.source === -1 ? "Server" : data.source }}
+			</template>
+		</Column>
 		<Column field="severity" header="Severity" style="width: 10%"></Column>
 		<Column field="category" header="Category" style="width: 10%"></Column>
 		<Column field="resource" header="Resource" style="width: 15%"></Column>
 		<Column field="timestamp" header="Timestamp" style="width: 15%"></Column>
-		<Column field="message" header="Message" style="width: 50%">
+		<Column field="message" header="Message" style="width: 45%">
 			<template #body="{ data }">
 				<template v-if="canBeObject(data.message)">
 					<pre>{{ formatMessage(data.message) }}</pre>

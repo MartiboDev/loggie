@@ -15,6 +15,7 @@ var logs []LoggieLog
 
 type LoggieLog struct {
 	ID        int64     `json:"id"`
+	Source    int64     `json:"source"`
 	Severity  string    `json:"severity"`
 	Category  string    `json:"category"`
 	Resource  string    `json:"resource"`

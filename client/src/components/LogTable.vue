@@ -1,24 +1,23 @@
 <template>
-	<DataTable :value="logs" tableStyle="min-width: 50rem">
-		<Column field="severity" header="Severity"></Column>
-		<Column field="category" header="Category"></Column>
-		<Column field="resource" header="Resource"></Column>
-		<Column field="timestamp" header="Timestamp"></Column>
-		<Column field="message" header="Message"></Column>
+	<DataTable :value="logs" tableStyle="min-width: 50rem" showGridlines>
+		<Column field="severity" header="Severity" style="width: 10%"></Column>
+		<Column field="category" header="Category" style="width: 10%"></Column>
+		<Column field="resource" header="Resource" style="width: 15%"></Column>
+		<Column field="timestamp" header="Timestamp" style="width: 15%"></Column>
+		<Column field="message" header="Message" style="width: 50%">
+			<template #body="{ data }">
+				<template v-if="canBeObject(data.message)">
+					<pre>{{ formatMessage(data.message) }}</pre>
+				</template>
+				<template v-else>{{ data.message }}</template>
+			</template>
+		</Column>
 	</DataTable>
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from "vue"
-
-interface Log {
-	id: number
-	severity: string
-	category: string
-	resource: string
-	timestamp: Date
-	message: string
-}
+import type { Log } from "@/models/Log"
+import { type PropType } from "vue"
 
 defineProps({
 	logs: {
@@ -26,6 +25,26 @@ defineProps({
 		required: true,
 	},
 })
+
+function formatMessage(message: string) {
+	try {
+		const jsonString = message.replace(/'/g, '"')
+		const obj = JSON.parse(jsonString)
+		return JSON.stringify(obj, null, 2)
+	} catch (e) {
+		return message
+	}
+}
+
+function canBeObject(message: string) {
+	try {
+		const jsonString = message.replace(/'/g, '"')
+		JSON.parse(jsonString)
+		return true
+	} catch (e) {
+		return false
+	}
+}
 
 // const logSeverity = {
 // 	debug: { icon: "pi-question-circle", color: "gray-500" },
@@ -36,21 +55,7 @@ defineProps({
 </script>
 
 <style scoped>
-table,
-th,
-td {
-	width: 100%;
-	border: 1px solid var(--border-color);
-	border-collapse: collapse;
-}
-
-th {
-	text-align: left;
-}
-
-th,
-td {
-	padding: 8px;
-	text-align: left;
+pre {
+	margin: 0;
 }
 </style>

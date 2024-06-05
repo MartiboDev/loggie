@@ -3,45 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/websocket"
 )
 
-const PORT = 3000
-
-var websocketServer *WebsocketServer
-
-// WebsocketServer represents a websocket server
-// that can handle multiple connections
-type WebsocketServer struct {
-	conns map[*websocket.Conn]bool
-}
-
-// create a new websocket server
-func NewServer() *WebsocketServer {
-	return &WebsocketServer{
-		conns: make(map[*websocket.Conn]bool),
-	}
-}
-
-func (s *WebsocketServer) handleConn(ws *websocket.Conn) {
-	s.conns[ws] = true
-}
-
-func (s *WebsocketServer) broadcast(b []byte) {
-	for ws := range s.conns {
-		fmt.Println("Broadcasting to: ", ws.RemoteAddr())
-		if _, err := ws.Write(b); err != nil {
-			fmt.Println("Write error: ", err)
-			ws.Close()
-			delete(s.conns, ws)
-		}
-	}
-}
+var logs []LoggieLog
 
 type LoggieLog struct {
 	ID        int64     `json:"id"`
@@ -52,10 +22,38 @@ type LoggieLog struct {
 	Message   string    `json:"message"`
 }
 
-// create an array of logs to store log messages
-var logs []LoggieLog
+var websocketServer = NewServer()
 
-func logHandler(w http.ResponseWriter, r *http.Request) {
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+type WebsocketServer struct {
+	conns map[*websocket.Conn]bool
+}
+
+func NewServer() *WebsocketServer {
+	return &WebsocketServer{
+		conns: make(map[*websocket.Conn]bool),
+	}
+}
+
+func (s *WebsocketServer) handleConn(conn *websocket.Conn) {
+	s.conns[conn] = true
+}
+
+func (s *WebsocketServer) broadcast(b []byte) {
+	for conn := range s.conns {
+		if err := conn.WriteMessage(websocket.TextMessage, b); err != nil {
+			log.Println(err)
+			conn.Close()
+			delete(s.conns, conn)
+		}
+	}
+}
+
+func logEndpoint(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		// encode the logs array into JSON and write it to the response
 		logsJSON, err := json.Marshal(logs)
@@ -67,13 +65,15 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(logsJSON)
 	} else if r.Method == "POST" {
 		// decode the request body into a new log
-		var newLog LoggieLog
-		err := json.NewDecoder(r.Body).Decode(&newLog)
+		var log LoggieLog
+		err := json.NewDecoder(r.Body).Decode(&log)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		log := createLog(newLog)
+		log.ID = int64(len(logs) + 1)
+		log.Timestamp = time.Now()
+
 		logs = append(logs, log)
 		logBytes, _ := json.Marshal(log)
 		websocketServer.broadcast(logBytes) // Convert log to []byte before passing it to websocketServer.broadcast()
@@ -84,27 +84,32 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createLog(newLog LoggieLog) LoggieLog {
-	return LoggieLog{
-		ID:        int64(len(logs) + 1),
-		Severity:  newLog.Severity,
-		Category:  newLog.Category,
-		Resource:  newLog.Resource,
-		Timestamp: time.Now(),
-		Message:   newLog.Message,
+func wsEndpoint(w http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
 	}
+
+	log.Println("Client connected")
+
+	websocketServer.handleConn(ws)
+}
+
+func setupRoutes() {
+	http.HandleFunc("/", logEndpoint)
+	http.HandleFunc("/ws", wsEndpoint)
 }
 
 func main() {
-	fmt.Printf("Starting loggie on port %d\n", PORT)
+	fmt.Println("Starting server on port:", 8080)
 
-	websocketServer = NewServer()
+	setupRoutes()
 
-	r := mux.NewRouter()
-	r.HandleFunc("/log", logHandler).Methods("GET", "POST")
-	r.Handle("/ws", websocket.Handler(websocketServer.handleConn))
+	corsOrigins := handlers.AllowedOrigins([]string{"http://localhost:5173"})
+	corsMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
+	corsHeaders := handlers.AllowedHeaders([]string{"Content-Type"})
 
-	handler := cors.Default().Handler(r)
-
-	http.ListenAndServe(fmt.Sprintf(":%d", PORT), handler)
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(corsOrigins, corsMethods, corsHeaders)(http.DefaultServeMux)))
 }

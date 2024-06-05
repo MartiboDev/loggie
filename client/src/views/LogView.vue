@@ -5,12 +5,13 @@
 </template>
 
 <script setup>
+import setupWebsocket from "@/util/setupWebsocket"
 import { ref, onMounted } from "vue"
 
 const logs = ref([])
 
 onMounted(() => {
-	fetch("http://localhost:3000/log")
+	fetch("http://localhost:8080/")
 		.then((response) => response.json())
 		.then((data) => {
 			logs.value = data ?? []
@@ -50,10 +51,14 @@ onMounted(() => {
 	// ]
 })
 
-let socket = new WebSocket("ws://localhost:3000/ws")
+const ws = setupWebsocket()
 
-socket.onmessage = (event) => {
-	logs.value.push(event.data)
+ws.onmessage = (event) => {
+	console.log("Received message from server:", event.data)
+
+	const log = JSON.parse(event.data)
+
+	logs.value.push(log)
 }
 </script>
 

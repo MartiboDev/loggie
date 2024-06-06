@@ -1,19 +1,24 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	ws "github.com/MartiboDev/loggie/internal/websocket"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/websocket"
 )
 
-const Port int64 = 8080
-const frontendPort int64 = 5173
-
 var logs []LoggieLog
+
+var websocketServer *ws.WebsocketServer
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 type LoggieLog struct {
 	ID        int64     `json:"id"`
@@ -25,12 +30,23 @@ type LoggieLog struct {
 	Message   string    `json:"message"`
 }
 
-func SetupRoutes() {
+func Run(serverPort int64, frontendPort int64) {
+	fmt.Println("Starting server on port:", serverPort)
+
+	websocketServer = ws.NewServer()
+
+	setupRoutes()
+	handler := setupCors(frontendPort)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprint(":", frontendPort), *handler))
+}
+
+func setupRoutes() {
 	http.HandleFunc("/", logEndpoint)
 	http.HandleFunc("/ws", wsEndpoint)
 }
 
-func SetupCors() *http.Handler {
+func setupCors(frontendPort int64) *http.Handler {
 	frontendAddr := fmt.Sprint("http://localhost:", frontendPort)
 
 	origins := handlers.AllowedOrigins([]string{frontendAddr})
@@ -40,48 +56,4 @@ func SetupCors() *http.Handler {
 	handler := handlers.CORS(origins, methods, headers)(http.DefaultServeMux)
 
 	return &handler
-}
-
-func logEndpoint(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		// encode the logs array into JSON and write it to the response
-		logsJSON, err := json.Marshal(logs)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(logsJSON)
-	} else if r.Method == "POST" {
-		// decode the request body into a new log
-		var log LoggieLog
-		err := json.NewDecoder(r.Body).Decode(&log)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		log.ID = int64(len(logs) + 1)
-		log.Timestamp = time.Now()
-
-		logs = append(logs, log)
-		logBytes, _ := json.Marshal(log)
-		websocketServer.broadcast(logBytes) // Convert log to []byte before passing it to websocketServer.broadcast()
-	} else {
-		// return a 405 Method Not Allowed if the request method is not GET or POST
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-}
-
-func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Println("Client connected")
-
-	websocketServer.handleConn(ws)
 }

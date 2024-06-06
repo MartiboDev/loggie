@@ -1,20 +1,21 @@
 # Specifies a parent image
-FROM golang:1.19.2-bullseye
- 
-# Creates an app directory to hold your app’s source code
+FROM golang:1.22.4-bullseye
+# Set destination for COPY
 WORKDIR /app
- 
-# Copies everything from your root directory into /app
-COPY . .
- 
-# Installs Go dependencies
+# Download Go modules
+COPY go.mod go.sum ./
 RUN go mod download
- 
-# Builds your app with optional configuration
-RUN go build -o /godocker
- 
-# Tells Docker which network port your container listens on
+# Copy the source code. Note the slash at the end, as explained in
+# https://docs.docker.com/reference/dockerfile/#copy
+COPY *.go ./
+COPY internal/ internal/
+# Build
+RUN CGO_ENABLED=0 GOOS=linux go build -o /build
+# Optional:
+# To bind to a TCP port, runtime parameters must be supplied to the docker command.
+# But we can document in the Dockerfile what ports
+# the application is going to listen on by default.
+# https://docs.docker.com/reference/dockerfile/#expose
 EXPOSE 8080
- 
-# Specifies the executable command that runs when the container starts
-CMD [ "/godocker" ]
+# Run
+CMD ["/build"]

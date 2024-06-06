@@ -4,11 +4,12 @@
 	</main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import setupWebsocket from "@/util/setupWebsocket"
-import { ref, onMounted } from "vue"
+import { ref, onMounted, type Ref } from "vue"
+import type { Log } from "@/models/Log"
 
-const logs = ref([])
+const logs: Ref<Log[]> = ref([])
 
 onMounted(() => {
 	fetch("http://localhost:8080/")
@@ -19,36 +20,6 @@ onMounted(() => {
 		.catch((error) => {
 			console.error("Error fetching logs:", error)
 		})
-	// logs.value = [
-	// 	{
-	// 		severity: "debug",
-	// 		category: "Client",
-	// 		resource: "main_race_2",
-	// 		timestamp: new Date(),
-	// 		message: "{ 'user': 'John', 'action': 'login' }",
-	// 	},
-	// 	{
-	// 		severity: "info",
-	// 		category: "Server",
-	// 		resource: "core_admin",
-	// 		timestamp: new Date(),
-	// 		message: "User logged in",
-	// 	},
-	// 	{
-	// 		severity: "warning",
-	// 		category: "Server",
-	// 		resource: "core_admin",
-	// 		timestamp: new Date(),
-	// 		message: "User tried deleting profile",
-	// 	},
-	// 	{
-	// 		severity: "error",
-	// 		category: "UI",
-	// 		resource: "main_race_2",
-	// 		timestamp: new Date(),
-	// 		message: "Error occurred in system",
-	// 	},
-	// ]
 })
 
 const ws = setupWebsocket()
@@ -56,7 +27,7 @@ const ws = setupWebsocket()
 ws.onmessage = (event) => {
 	console.log("Received message from server:", event.data)
 
-	const log = JSON.parse(event.data)
+	const log: Log = JSON.parse(event.data)
 
 	logs.value.push(log)
 }

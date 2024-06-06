@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	ws "github.com/MartiboDev/loggie/internal/websocket"
+	wsHelper "github.com/MartiboDev/loggie/internal/websocket"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"
 )
 
 var logs []LoggieLog
 
-var websocketServer *ws.WebsocketServer
+var websocketServer *wsHelper.WebsocketServer
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -33,12 +33,12 @@ type LoggieLog struct {
 func Run(serverPort int64, frontendPort int64) {
 	fmt.Println("Starting server on port:", serverPort)
 
-	websocketServer = ws.NewServer()
+	websocketServer = wsHelper.NewServer()
 
 	setupRoutes()
 	handler := setupCors(frontendPort)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":", frontendPort), *handler))
+	log.Fatal(http.ListenAndServe(fmt.Sprint(":", serverPort), *handler))
 }
 
 func setupRoutes() {

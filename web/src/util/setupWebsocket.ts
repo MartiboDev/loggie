@@ -1,5 +1,7 @@
 export default function setupWebsocket() {
-	const ws = new WebSocket("ws://localhost:8080/ws")
+	const ws = new WebSocket(
+		`ws://localhost:${import.meta.env.VITE_SERVER_PORT ?? 8080}/ws`
+	)
 
 	ws.onopen = () => {
 		console.log("Connected to the server")

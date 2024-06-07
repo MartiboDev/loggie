@@ -11,5 +11,6 @@ RUN npm install
 COPY . .
 # build app for production with minification
 RUN npm run build
+# provide server port
 EXPOSE 5173
 CMD [ "http-server", "dist", "-p", "5173" ]

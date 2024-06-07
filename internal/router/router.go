@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MartiboDev/loggie/config"
+	config "github.com/MartiboDev/loggie/internal/config"
 	wsHelper "github.com/MartiboDev/loggie/internal/websocket"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"

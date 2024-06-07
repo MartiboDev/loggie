@@ -12,7 +12,7 @@ import type { Log } from "@/models/Log"
 const logs: Ref<Log[]> = ref([])
 
 onMounted(() => {
-	fetch("http://localhost:8080/")
+	fetch(`http://localhost:${import.meta.env.VITE_SERVER_PORT ?? 8080}`)
 		.then((response) => response.json())
 		.then((data) => {
 			logs.value = data ?? []

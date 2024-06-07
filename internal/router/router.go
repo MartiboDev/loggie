@@ -1,11 +1,11 @@
-package api
+package router
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
+	"github.com/MartiboDev/loggie/config"
 	wsHelper "github.com/MartiboDev/loggie/internal/websocket"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"
@@ -30,15 +30,17 @@ type LoggieLog struct {
 	Message   string    `json:"message"`
 }
 
-func Run(serverPort int64, frontendPort int64) {
+func Run() {
+	serverPort := config.Get("SERVER_PORT")
+
 	fmt.Println("Starting server on port:", serverPort)
 
 	websocketServer = wsHelper.NewServer()
 
 	setupRoutes()
-	handler := setupCors(frontendPort)
+	handler := setupCors()
 
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":", serverPort), *handler))
+	http.ListenAndServe(fmt.Sprint(":", serverPort), *handler)
 }
 
 func setupRoutes() {
@@ -46,7 +48,9 @@ func setupRoutes() {
 	http.HandleFunc("/ws", wsEndpoint)
 }
 
-func setupCors(frontendPort int64) *http.Handler {
+func setupCors() *http.Handler {
+	frontendPort := config.Get("FRONTEND_PORT")
+
 	frontendAddr := fmt.Sprint("http://localhost:", frontendPort)
 
 	origins := handlers.AllowedOrigins([]string{frontendAddr})

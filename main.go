@@ -1,12 +1,11 @@
 package main
 
 import (
-	api "github.com/MartiboDev/loggie/internal/api"
+	config "github.com/MartiboDev/loggie/internal/config"
+	router "github.com/MartiboDev/loggie/internal/router"
 )
 
-const serverPort int64 = 8080
-const frontendPort int64 = 5173
-
 func main() {
-	api.Run(serverPort, frontendPort)
+	config.Init()
+	router.Run()
 }
